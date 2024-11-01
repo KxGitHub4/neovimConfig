@@ -1,10 +1,27 @@
   local cmp = require'cmp'
+
+  local row,col
+
   local has_words_before = function()
-     unpack = unpack or table.unpack
-     local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-     return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
-   end
-    
+     row, col = unpack(vim.api.nvim_win_get_cursor(0))
+     return col ~= 0 and vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]:sub(col, col):match("%s") == nil
+  end
+  
+  local function is_cursor_right_of_paren()
+     -- 获取当前光标位置
+     row, col = unpack(vim.api.nvim_win_get_cursor(0))
+     
+     -- 获取光标右侧的字符
+     local line = vim.api.nvim_get_current_line()
+     local char_right = line:sub(col + 1, col + 1)
+     
+     -- 定义括号字符集
+     local brackets = { [")"] = true, ["]"] = true, ["}"] = true, ["\""] = true,  ["'"] = true }
+     
+     -- 检查光标右侧字符是否为括号
+      return brackets[char_right] 
+  end
+
   cmp.setup({
     snippet = {
       -- REQUIRED - you must specify a snippet engine
@@ -42,6 +59,8 @@
         if #cmp.get_entries() == 1 then
           cmp.confirm({ select = true })
         end
+      elseif is_cursor_right_of_paren() then
+        vim.api.nvim_win_set_cursor(0, {row, col + 1})
       else
         fallback()
       end
